@@ -13,8 +13,6 @@ public class EmailMessageTest {
                 .attachmentName("document.pdf")
                 .attachmentBase64("dGVzdA==")
                 .build();
-                var expected = emailMessage.getAttachmentInfo();
-                System.out.println("Esoeradiooooooo: \n" + expected);
         assertEquals("FileName: document.pdf\nFileBase64: dGVzdA==", emailMessage.getAttachmentInfo());
     }
 

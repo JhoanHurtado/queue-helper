@@ -1,0 +1,7 @@
+/target/
+
+.vscode/
+
+.fake
+!**/src/main/**/target/
+!**/src/test/**/target/
