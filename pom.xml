@@ -112,10 +112,6 @@
                         <goal>prepare-agent</goal>
                         <goal>report</goal>
                     </goals>
-                    <configuration>
-                        <dataFile>${project.build.directory}/jacoco.exec</dataFile>
-                        <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
-                    </configuration>
                     </execution>
                 </executions>
             </plugin>
