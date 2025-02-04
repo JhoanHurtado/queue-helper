@@ -40,4 +40,7 @@ public class MessagingFacade {
     public void send(String queueOrTopic, MessageModel message, int priority, int deliveryMode) {
         strategy.sendMessage(queueOrTopic, message, priority, deliveryMode);
     }
+    public void read(String queueOrTopic, MessageModel message) {
+        strategy.readMessage(queueOrTopic, message);
+    }
 }

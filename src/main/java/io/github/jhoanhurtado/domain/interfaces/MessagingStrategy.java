@@ -15,4 +15,5 @@ public interface MessagingStrategy {
      * @param deliveryMode Modo de entrega del mensaje (valores mínimos deben ser 1 para evitar errores).
      */
     void sendMessage(String queue, MessageModel message, int priority, int deliveryMode);
+    void readMessage(String queue, MessageModel message);
 }

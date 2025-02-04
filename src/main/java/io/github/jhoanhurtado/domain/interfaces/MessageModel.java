@@ -19,4 +19,11 @@ public interface MessageModel {
      * @return El contenido del mensaje.
      */
     String getContent();
+
+    /**
+     * Convierte el modelo de mensaje a su representación JSON.
+     *
+     * @return Una cadena JSON que representa el modelo de mensaje.
+     */
+    String toJson();
 }
