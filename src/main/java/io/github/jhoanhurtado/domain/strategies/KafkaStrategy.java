@@ -23,4 +23,9 @@ public class KafkaStrategy implements MessagingStrategy {
     public void sendMessage(String topic, MessageModel message, int priority, int deliveryMode) {
         producer.send(new ProducerRecord<>(topic, message.getDestination(), message.getContent()));
     }
+
+    @Override
+    public void readMessage(String queue, MessageModel message) {
+        throw new UnsupportedOperationException("Unimplemented method 'readMessage'");
+    }
 }
