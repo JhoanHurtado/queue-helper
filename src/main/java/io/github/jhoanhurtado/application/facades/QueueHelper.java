@@ -3,12 +3,13 @@ package io.github.jhoanhurtado.application.facades;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.rabbitmq.client.Connection;
+
 import io.github.jhoanhurtado.domain.interfaces.MessageModel;
 import io.github.jhoanhurtado.domain.interfaces.MessagingStrategy;
 import io.github.jhoanhurtado.domain.strategies.KafkaStrategy;
 import io.github.jhoanhurtado.domain.strategies.RabbitMQStrategy;
 import io.github.jhoanhurtado.infrastructure.config.MessagingConnection;
-import com.rabbitmq.client.Connection;
 
 /**
  * Clase fachada que gestiona conexiones a diferentes brokers de mensajería,
@@ -16,13 +17,12 @@ import com.rabbitmq.client.Connection;
  */
 public class QueueHelper {
 
-    private MessagingStrategy strategy;
-
-    private Map<String, MessagingStrategy> strategies; // Mapa de estrategias por broker
-    private Map<String, Connection> connections; // Mapa de conexiones a los brokers
+    private final Map<String, MessagingStrategy> strategies; // Mapa de estrategias por broker
+    private final Map<String, Connection> connections; // Mapa de conexiones a los brokers
 
     /**
-     * Constructor de la clase QueueHelper. Inicializa las conexiones y estrategias.
+     * Constructor de la clase QueueHelper. Inicializa las conexiones y
+     * estrategias.
      */
     public QueueHelper() {
         strategies = new HashMap<>();
@@ -30,12 +30,13 @@ public class QueueHelper {
     }
 
     /**
-     * Establece una conexión a RabbitMQ utilizando la clase MessagingConnection.
+     * Establece una conexión a RabbitMQ utilizando la clase
+     * MessagingConnection.
      *
      * @param brokerName Nombre del broker (por ejemplo, "rabbitmq1").
-     * @param host       Dirección del servidor RabbitMQ.
-     * @param username   Nombre de usuario para la autenticación.
-     * @param password   Contraseña para la autenticación.
+     * @param host Dirección del servidor RabbitMQ.
+     * @param username Nombre de usuario para la autenticación.
+     * @param password Contraseña para la autenticación.
      * @throws Exception Si ocurre un error al establecer la conexión.
      */
     public void withRabbitMQ(String brokerName, String host, String username, String password) throws Exception {
@@ -50,18 +51,17 @@ public class QueueHelper {
      * Método para enviar un mensaje a un broker utilizando la estrategia
      * configurada.
      *
-     * @param brokerName   Nombre del broker al que se enviará el mensaje.
-     * @param queue        Nombre de la cola a la que se enviará el mensaje.
-     * @param message      Objeto MessageModel que contiene el contenido del
-     *                     mensaje.
-     * @param priority     Prioridad del mensaje.
+     * @param brokerName Nombre del broker al que se enviará el mensaje.
+     * @param queue Nombre de la cola a la que se enviará el mensaje.
+     * @param message Objeto MessageModel que contiene el contenido del mensaje.
+     * @param priority Prioridad del mensaje.
      * @param deliveryMode Modo de entrega del mensaje.
      * @throws QueueHelper Instancia configurada con Kafka strategy.
      */
     public static QueueHelper withKafka(String broker, String queue, MessageModel message, int priority,
             int deliveryMode) {
         QueueHelper helper = new QueueHelper();
-        helper.strategy = new KafkaStrategy(broker);
+        helper.strategies.put(queue, new KafkaStrategy(broker));
         return helper;
     }
 

@@ -7,7 +7,6 @@ on:
       - qa
       - dev
       - 'releases/**'
-      - modified-errores-cobertura
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:

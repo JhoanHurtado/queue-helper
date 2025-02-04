@@ -52,6 +52,22 @@ Representa un mensaje de correo electrónico que será enviado a una cola en un 
   - `String getDestination()`: Obtiene el correo electrónico del remitente.
   - `String getContent()`: Obtiene el contenido completo del mensaje.
 
+### 6. `MessageObserver`
+
+Permite suscribirse a eventos de mensajes y notifica a los observadores cuando se recibe un mensaje.
+
+- **Método **``:
+  - `void subscribe(MessageCallback callback)`: Suscribe un callback que será llamado cuando se reciba un mensaje.
+
+### 7. `RabbitMQConsumer`
+
+Consume mensajes de una cola de RabbitMQ y notifica a los observadores.
+
+- **Constructor**:
+  - `RabbitMQConsumer(MessageObserver observer, Connection connection)`: Inicializa el consumidor con un observador y una conexión a RabbitMQ.
+- **Método **``:
+  - `void startListening()`: Inicia la escucha de mensajes en la cola.
+
 ## Implementación Paso a Paso
 
 1. **Configurar el Mensaje de Correo Electrónico**:
@@ -79,7 +95,7 @@ Representa un mensaje de correo electrónico que será enviado a una cola en un 
 3. **Conectar a RabbitMQ**:
 
    ```java
-   queueHelper.withRabbitMQ("RABBITMQ_MESSAGE", "18.117.106.167", "application", "GlobalStore");
+   queueHelper.withRabbitMQ("RABBITMQ_MESSAGE", "127.0.0.1", "rabbit_user", "rabbit_password");
    ```
 
 4. **Usar la fachada con RabbitMQ**:
@@ -99,6 +115,36 @@ Representa un mensaje de correo electrónico que será enviado a una cola en un 
 
    ```java
    queueHelper.disconnect("RABBITMQ_MESSAGE");
+   ```
+
+## Consumo de Mensajes
+
+1. **Crear el Observador**:
+
+   ```java
+   MessageObserver observer = new MessageObserver();
+   ```
+
+2. **Suscribir el Callback**:
+
+   ```java
+   observer.subscribe((MessageModelRequest message) -> {
+       try {
+           var msg = message.getContent();
+           ObjectMapper objectMapper = new ObjectMapper();
+           EmailMessage emailMessage = objectMapper.readValue(msg, EmailMessage.class);
+           System.out.println("✉️ Email: " + emailMessage);
+       } catch (JsonProcessingException e) {
+           System.err.println("Error al procesar el mensaje: " + e.getMessage());
+       }
+   });
+   ```
+
+3. **Iniciar el Consumidor de RabbitMQ**:
+
+   ```java
+   RabbitMQConsumer consumer = new RabbitMQConsumer(observer, queueHelper.getConnection("RABBITMQ_MESSAGE"));
+   consumer.startListening();
    ```
 
 ## Flujo de Modificación
@@ -143,7 +189,7 @@ Al usar la libreria asegúrate de tener las siguientes dependencias en tu proyec
 
 ### Gradle
 
-```gradle
+```gradle 
 implementation 'org.slf4j:slf4j-simple:1.7.32'
 ```
 
