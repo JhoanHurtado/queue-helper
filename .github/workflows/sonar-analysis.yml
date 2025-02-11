@@ -48,7 +48,7 @@ jobs:
       - name: Configure Maven settings
         run: |
           mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.ACTOR_TOKEN }}</username><password>${{ secrets.ACTOR_USER }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.GITHUB_ACTOR }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Build with Maven
         run: mvn clean install -DskipTests
