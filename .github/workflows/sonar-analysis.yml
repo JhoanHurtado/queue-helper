@@ -11,6 +11,10 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   sonarqube:
     name: Build, Test and Analyze with SonarQube
@@ -19,13 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0  # Deshabilitar shallow clones para mejor análisis en SonarQube
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: 21
-          distribution: 'zulu'  # Alternative distribution options are available.
+          distribution: 'zulu'
 
       - name: Cache SonarQube packages
         uses: actions/cache@v4
@@ -41,12 +45,16 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Configure Maven settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.ACTOR_TOKEN }}</username><password>${{ secrets.ACTOR_USER }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
       - name: Build with Maven
         run: mvn clean install -DskipTests
 
       - name: Run tests and generate JaCoCo coverage report
         run: mvn test
 
-      ###### SonarQube Analysis for Maven projects
       - name: Maven SonarQube Analysis
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=globalstore-v_queue_helper -Dsonar.projectName=queue_helper -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.token=${{ secrets.SONAR_TOKEN }}
