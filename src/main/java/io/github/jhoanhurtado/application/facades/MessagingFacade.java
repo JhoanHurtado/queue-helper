@@ -13,7 +13,7 @@ import io.github.jhoanhurtado.domain.interfaces.MessagingStrategy;
 public class MessagingFacade {
 
     /** Estrategia de mensajería utilizada para enviar mensajes. */
-    private MessagingStrategy strategy;
+    private final MessagingStrategy strategy;
 
     /**
      * Constructor de la clase MessagingFacade.

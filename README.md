@@ -68,6 +68,26 @@ Consume mensajes de una cola de RabbitMQ y notifica a los observadores.
 - **Método **``:
   - `void startListening()`: Inicia la escucha de mensajes en la cola.
 
+### 8. `LogConfigManager`
+
+El LogConfigManager es responsable de gestionar la configuración de logs en archivo local y en AWS CloudWatch. Permite habilitar o deshabilitar los logs, así como configurar la ubicación del archivo y la región de AWS grupo y stream de cloudwoatch.
+
+- **Métodos Principales:
+
+	-	`setFileLogEnable(boolean enable)`: Habilita o deshabilita el log en archivo local. No se puede deshabilitar el log en archivo si CloudWatch no está habilitado.
+
+	-	`setFileLogLocation(String location)`: Establece la ubicación del log en archivo local.
+
+	- `setCloudWatchEnable(boolean enable)`: Habilita o deshabilita el log en AWS CloudWatch.
+
+	- `setCloudWatchLogGroup(String logGroup)`: Establece el nombre del grupo de logs en CloudWatch.
+
+	- `setCloudWatchLogStream(String logStream)`: Establece el nombre del flujo de logs en CloudWatch.
+
+	- `setCloudWatchRegion(AwsRegion region)`: Establece la región de AWS CloudWatch.
+
+	- `saveConfig()`: Guarda la configuración en el archivo local.properties.
+
 ## Implementación Paso a Paso
 
 1. **Configurar el Mensaje de Correo Electrónico**:
@@ -119,6 +139,20 @@ Consume mensajes de una cola de RabbitMQ y notifica a los observadores.
 
 ## Consumo de Mensajes
 
+1. **Configurar ubicacion de logs**:
+    ```java
+    LogConfigManager configManager = new LogConfigManager();
+    //CloudWatch configuracion
+    configManager.setCloudWatchEnable(true);
+    configManager.setCloudWatchLogGroup("MiAppLogs");
+    configManager.setCloudWatchLogStream("MiStreamLogs");
+    configManager.setCloudWatchRegion(AwsRegion.US_EAST_2);
+
+    //confinguracion de logs locales
+    configManager.setFileLogEnable(true);
+    configManager.setFileLogLocation("location/app-service.log");
+    configManager.saveConfig();
+    ```
 1. **Crear el Observador**:
 
    ```java
@@ -192,4 +226,142 @@ Al usar la libreria asegúrate de tener las siguientes dependencias en tu proyec
 ```gradle 
 implementation 'org.slf4j:slf4j-simple:1.7.32'
 ```
+## Ejemplo de uso
 
+### Publicar mensaje
+```java
+LogConfigManager configManager = new LogConfigManager();
+Logger logger;
+
+// Configuración de logs si requieres almacenaqr los en cloudwatch, 
+// antes se debe de tener configuradas las credenciales o el perfefil default en el equitpo para poder conectarse
+configManager.setCloudWatchEnable(true);
+configManager.setCloudWatchLogGroup("MiAppLogs");
+configManager.setCloudWatchLogStream("MiStreamLogs");
+configManager.setCloudWatchRegion(AwsRegion.US_EAST_2);
+
+//configurar el log local, si no se define la informacion se va guardar en documentos/logs/queue-helper
+configManager.setFileLogEnable(true);
+
+        //Guarda la configuracion definida
+configManager.saveConfig();
+
+        // inicializa el log factory despues de establecer la configuracion de logs para que pueda tomar la configuracion
+logger = new LoggerFactory().getCompositeLogger();
+
+try {
+    //nombre de la cola donde se va pulicar el mensaje
+    String rabbitmqMessage = "queue-email-message-sending";
+    //crea el cuerpo del mensaje
+    EmailMessage email = createEmailMessage();
+
+    // Crear la instancia de la fachada QueueHelper
+    QueueHelper queueHelper = new QueueHelper();
+
+    // Conectar a RabbitMQ
+    logger.log("Conectando a RabbitMQ en: 127.0.0.1", LogLevel.INFO);
+    queueHelper.withRabbitMQ(rabbitmqMessage, "127.0.0.1", "app-user","app-pass");
+
+    // Usar la fachada con RabbitMQ
+    MessagingFacade messagingFacade = new MessagingFacade(
+            new RabbitMQStrategy(queueHelper.getConnection(rabbitmqMessage)));
+    messagingFacade.send(rabbitmqMessage, email, 1, 1);
+
+    // Cerrar la conexión después de usarla
+    queueHelper.disconnect(rabbitmqMessage);
+
+    logger.log("Mensaje enviado correctamente a RabbitMQ", LogLevel.INFO);
+
+  } catch (Exception e) {
+      logger.log("Error en la aplicación: " + e.getMessage(), LogLevel.CRITICAL);
+  }
+    
+
+/**
+ * Crea un mensaje de correo electrónico de prueba.
+ * 
+ * @return Una instancia de {@link EmailMessage} con valores predefinidos.
+ */
+private static EmailMessage createEmailMessage() {
+    return new EmailMessage.Builder()
+            .senderEmail("example@example.com")
+            .recipients(List.of("recipient1@example.com", "recipient2@example.com"))
+            .ccRecipients(List.of("cc1@example.com"))
+            .bccRecipients(List.of("bcc1@example.com"))
+            .subject("Subject of the email")
+            .body("Body of the email")
+            .isHtml(true)
+            .attachmentBase64("base64EncodedString")
+            .attachmentName("attachment.pdf")
+            .build();
+}
+```
+
+### Consumir mensaje
+
+```Java
+LogConfigManager configManager = new LogConfigManager();
+Logger logger;
+
+// Configuración de logs si requieres almacenaqr los en cloudwatch, 
+// antes se debe de tener configuradas las credenciales o el perfefil default en el equitpo para poder conectarse
+configManager.setCloudWatchEnable(true);
+configManager.setCloudWatchLogGroup("MiAppLogs");
+configManager.setCloudWatchLogStream("MiStreamLogs");
+configManager.setCloudWatchRegion(AwsRegion.US_EAST_2);
+
+//configurar el log local, si no se define la informacion se va guardar en documentos/logs/queue-helper
+configManager.setFileLogEnable(true);
+
+//Guarda la configuracion definida
+configManager.saveConfig();
+
+// inicializa el log factory despues de establecer la configuracion de logs para que pueda tomar la configuracion
+logger = new LoggerFactory().getCompositeLogger();
+
+try {
+  // cola de la que se va leer el mensaje
+    String rabbitmqMessage = "queue-email-message-sending";
+    EmailMessage email = createEmailMessage();
+
+    // Crear la instancia de la fachada QueueHelper
+    QueueHelper queueHelper = new QueueHelper();
+
+    // Conectar a RabbitMQ
+    logger.log("Conectando a RabbitMQ en: 127.0.0.1", LogLevel.INFO);
+    queueHelper.withRabbitMQ(rabbitmqMessage, "127.0.0.1", "app-user", "app-pass");
+
+    // Configuración para consumir una cola
+    // Crear el observador
+    MessageObserver observer = new MessageObserver();
+
+    // Suscribir el callback (lambda)
+    observer.subscribe((MessageModelRequest message) -> {
+        try {
+            processMessage(message);
+        } catch (JsonProcessingException e) {
+            logger.log("Error al procesar el mensaje: " + e.getMessageLogLevel.CRITICAL);
+        }
+    });
+
+    // Iniciar el consumidor de RabbitMQ
+    RabbitMQConsumer consumer = new RabbitMQConsumer(observer, queueHelper.getConnection(rabbitmqMessage), rabbitmqMessage);
+    consumer.startListening();
+
+} catch (Exception e) {
+    logger.log("Error en la aplicación: " + e.getMessage(), LogLevel.CRITICAL);
+}
+
+/**
+ * Procesa el mensaje recibido de RabbitMQ y lo convierte en un objeto EmailMessage.
+ * 
+ * @param message El mensaje recibido en formato JSON.
+ * @throws JsonProcessingException Si ocurre un error al procesar el JSON.
+ */
+private static void processMessage(MessageModelRequest message) throws JsonProcessingException {
+    var msg = message.getContent();
+    ObjectMapper objectMapper = new ObjectMapper();
+    EmailMessage emailMessage = objectMapper.readValue(msg, EmailMessage.class);
+    System.out.println("✉️ Email: " + emailMessage.toJson());
+}
+```
