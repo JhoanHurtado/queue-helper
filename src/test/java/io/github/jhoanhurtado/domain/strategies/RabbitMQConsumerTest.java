@@ -35,7 +35,7 @@ public class RabbitMQConsumerTest {
         channel = mock(Channel.class);
 
         when(connection.createChannel()).thenReturn(channel);
-        rabbitMQConsumer = new RabbitMQConsumer(observer, connection);
+        rabbitMQConsumer = new RabbitMQConsumer(observer, connection, "queue-email-message-sending");
     }
 
     @Test
